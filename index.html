@@ -5,7 +5,7 @@
   <title>錶亦新聞</title>
   <link rel="icon" type="image/png" href="https://ryan1114-carer.github.io/biaoie-news/favicon.png">
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
+    body { font-family: sans-serif; padding: 20px; background: #fff; }
     h1 { color: #333; margin-bottom: 20px; text-align: center; }
     .grid {
       display: grid;
@@ -52,7 +52,7 @@
 
   <script>
     const apiUrl = 'https://newsdata.io/api/1/latest?apikey=pub_65117b9f97c2438da5c3340270c4d462&country=tw&language=zht&timezone=Asia/Taipei';
-    const defaultImage = 'https://ryan1114-carer.github.io/biaoie-news/no_news_img.png';
+    const defaultImage = 'https://ryan1114-carer.github.io/biaoie-news/no_news_img.png'; // Windows 7 桌布
 
     async function fetchNews() {
       try {
@@ -70,16 +70,16 @@
         }
 
         news.forEach(item => {
-          const title = item.title || '錶亦新聞範例標題';
+          const title = item.title || '無標題';
           const link = item.link || '#';
-          const description = item.description || '錶亦新聞範例說明';
+          const description = item.description || '無說明';
           const imageUrl = item.image_url || defaultImage;
           const date = new Date(item.pubDate).toLocaleString();
 
           const card = document.createElement('div');
           card.className = 'news-card';
           card.innerHTML = `
-            <img src="${imageUrl}" alt="錶亦新聞預覽圖" onerror="this.onerror=null;this.src='${defaultImage}';">
+            <img src="${imageUrl}" alt="錶亦新聞圖" onerror="this.onerror=null;this.src='${defaultImage}';">
             <a href="${link}" target="_blank">${title}</a>
             <div class="description">${description}</div>
             <div class="date">${date}</div>
@@ -89,7 +89,7 @@
           notifyUser(`錶亦新聞通知：${title}`);
         });
       } catch (error) {
-        console.error('錶哥熊很努力了，我們只找到了錯誤，錯誤碼為：', error);
+        console.error('錶哥熊很努力了，我們未找到新聞，錯誤碼為：', error);
       }
     }
 
