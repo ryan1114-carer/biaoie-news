@@ -5,16 +5,61 @@
   <title>錶亦新聞</title>
   <link rel="icon" type="image/png" href="https://ryan1114-carer.github.io/biaoie-news/favicon.png">
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #fff; }
-    h1 { color: #333; margin-bottom: 20px; text-align: center; }
+    :root {
+      --bg-color: #f5f5f5;
+      --text-color: #000;
+      --card-bg: #fff;
+      --card-border: #ddd;
+      --button-bg: rgba(255, 255, 255, 0.3);
+      --button-text: #000;
+    }
+    [data-theme="dark"] {
+      --bg-color: #111;
+      --text-color: #fff;
+      --card-bg: #1e1e1e;
+      --card-border: #444;
+      --button-bg: rgba(255, 255, 255, 0.3);
+      --button-text: #fff;
+    }
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+    .title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 10px;
+      position: relative;
+    }
+    .title-bar img {
+      width: 40px;
+      height: 40px;
+    }
+    h1 {
+      margin: 0;
+      text-align: center;
+    }
+    .theme-toggle {
+      position: absolute;
+      right: 0;
+      padding: 5px 10px;
+      cursor: pointer;
+      background-color: var(--button-bg);
+      color: var(--button-text);
+      border: none;
+    }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 20px;
     }
     .news-card {
-      background: #fff;
-      border: 1px solid #ddd;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
       padding: 10px;
       display: flex;
       flex-direction: column;
@@ -27,32 +72,68 @@
     }
     .news-card a {
       font-weight: bold;
-      color: #000;
+      color: var(--text-color);
       text-decoration: none;
     }
     .description {
       margin: 10px 0;
-      color: #333;
     }
     .date {
       font-size: 0.85em;
-      color: #666;
+      color: gray;
     }
     #noNews {
       text-align: center;
       font-size: 1.2em;
-      color: #666;
     }
   </style>
 </head>
 <body>
-  <h1>錶亦新聞</h1>
+  <div class="title-bar">
+    <img src="https://ryan1114-carer.github.io/biaoie-news/favicon.png" alt="Logo">
+    <h1>錶亦新聞</h1>
+    <button class="theme-toggle" onclick="toggleTheme()">切換主題</button>
+  </div>
   <div class="grid" id="newsGrid"></div>
   <div id="noNews" style="display:none;">哎呀，錶哥熊未發現新聞</div>
 
   <script>
     const apiUrl = 'https://newsdata.io/api/1/latest?apikey=pub_65117b9f97c2438da5c3340270c4d462&country=tw&language=zht&timezone=Asia/Taipei';
-    const defaultImage = 'https://ryan1114-carer.github.io/biaoie-news/no_news_img.png'; // Windows 7 桌布
+    const defaultImage = 'https://ryan1114-carer.github.io/biaoie-news/no_news_img.png';
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+    }
+
+    function setCookie(name, value) {
+      document.cookie = `${name}=${encodeURIComponent(value)};path=/`;
+    }
+
+    function getSavedLinks() {
+      const data = getCookie('newsLinks');
+      return data ? JSON.parse(data) : [];
+    }
+
+    function saveLinks(links) {
+      setCookie('newsLinks', JSON.stringify(links));
+    }
+
+    function getTheme() {
+      return getCookie('theme') || 'light';
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      setCookie('theme', next);
+    }
 
     async function fetchNews() {
       try {
@@ -63,13 +144,26 @@
         const noNews = document.querySelector('#noNews');
         newsGrid.innerHTML = '';
 
-        if (news.length === 0) {
+        let savedLinks = getSavedLinks();
+        let newLinks = [...savedLinks];
+        let hasNew = false;
+
+        const filteredNews = news.filter(item => {
+          if (!savedLinks.includes(item.link)) {
+            newLinks.push(item.link);
+            hasNew = true;
+            return true;
+          }
+          return false;
+        });
+
+        if (filteredNews.length === 0) {
           noNews.style.display = 'block';
         } else {
           noNews.style.display = 'none';
         }
 
-        news.forEach(item => {
+        filteredNews.forEach(item => {
           const title = item.title || '無標題';
           const link = item.link || '#';
           const description = item.description || '無說明';
@@ -88,6 +182,8 @@
 
           notifyUser(`錶亦新聞通知：${title}`);
         });
+
+        if (hasNew) saveLinks(newLinks);
       } catch (error) {
         console.error('錶哥熊很努力了，我們未找到新聞，錯誤碼為：', error);
       }
@@ -105,6 +201,7 @@
       }
     }
 
+    applyTheme(getTheme());
     fetchNews();
     setInterval(() => {
       location.reload();
